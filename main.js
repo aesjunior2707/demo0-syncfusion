@@ -30,7 +30,7 @@ try {
 // Registrar licença do Syncfusion
 try {
     if (typeof ej !== 'undefined' && ej.base && ej.base.registerLicense) {
-        ej.base.registerLicense('Org4AjUWIQA/Gnt3VVhhQlJDfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5bdE1jUX9fdXVTQGZVWkd+');
+        ej.base.registerLicense('ORg4AjUWIQA/Gnt3VVhhQlJDfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5bdE1jUXxWcXZcQGNZWkd+');
         console.log('Licença Syncfusion registrada.');
     } else {
         console.warn('API de licença do Syncfusion não disponível.');
