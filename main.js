@@ -27,6 +27,18 @@ try {
     console.error('Erro ao inicializar cultura:', error);
 }
 
+// Registrar licença do Syncfusion
+try {
+    if (typeof ej !== 'undefined' && ej.base && ej.base.registerLicense) {
+        ej.base.registerLicense('Org4AjUWIQA/Gnt3VVhhQlJDfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5bdE1jUX9fdXVTQGZVWkd+');
+        console.log('Licença Syncfusion registrada.');
+    } else {
+        console.warn('API de licença do Syncfusion não disponível.');
+    }
+} catch (e) {
+    console.error('Falha ao registrar a licença do Syncfusion:', e);
+}
+
 // Função para exibir predecessores de forma amigável na coluna
 function displayPredecessors(field, data, column) {
     if (data.Predecessor) {
