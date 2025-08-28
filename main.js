@@ -284,3 +284,29 @@ if (ganttChart) {
         }
     };
 }
+
+// Atalhos de teclado: Ctrl+Shift+→ para indentar, Ctrl+Shift+← para desindentar
+(function bindGanttShortcuts(){
+    if (!ganttChart) return;
+    function isTypingTarget(target){
+        var tag = (target && target.tagName ? target.tagName : '').toLowerCase();
+        return tag === 'input' || tag === 'textarea' || (target && target.isContentEditable === true);
+    }
+    function onKeyDown(e){
+        if (!ganttChart) return;
+        if (!e.ctrlKey || !e.shiftKey) return;
+        if (isTypingTarget(e.target)) return;
+        if (e.key === 'ArrowRight') {
+            if (typeof ganttChart.indent === 'function') {
+                e.preventDefault();
+                ganttChart.indent();
+            }
+        } else if (e.key === 'ArrowLeft') {
+            if (typeof ganttChart.outdent === 'function') {
+                e.preventDefault();
+                ganttChart.outdent();
+            }
+        }
+    }
+    document.addEventListener('keydown', onKeyDown, false);
+})();
