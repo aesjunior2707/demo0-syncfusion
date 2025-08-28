@@ -74,7 +74,7 @@ try {
         allowTaskbarEditing: true,
         mode: 'Auto'
     },
-    toolbar: ['Update', 'Delete','Clear', 'Cancel', 'ExpandAll', 'CollapseAll', 'ExcelExport', 'PdfExport', 'Search', 'ZoomIn', 'ZoomOut', 'ZoomToFit'],
+    toolbar: ['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'ExpandAll', 'CollapseAll', 'Indent', 'Outdent', 'Search', 'ZoomIn', 'ZoomOut', 'ZoomToFit', 'ExcelExport', 'CsvExport', 'PdfExport'],
     highlightWeekends: true,
     timelineSettings: {
         timelineUnitSize: 100,
