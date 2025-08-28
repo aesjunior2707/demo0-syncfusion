@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+ <html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+           <title>Essential JS 2 Gantt</title>
+           <!-- Essential JS 2 Bootstrap 5 theme -->
+           <link href="https://cdn.syncfusion.com/ej2/30.2.7/bootstrap5.css" rel="stylesheet" type="text/css"/>
+            <!-- Essential JS 2 all script -->
+           <script src="https://cdn.syncfusion.com/ej2/30.2.7/dist/ej2.min.js" type="text/javascript"></script>
+           <!-- Localization script -->
+           <script src="localization.js" type="text/javascript"></script>
+      </head>
+      <body>
+          <!-- Language Selector -->
+          <div id="language-selector-container">
+              <div class="language-selector">
+                  <label for="languageSelector">🌐 Language:</label>
+                  <select id="languageSelector" onchange="changeLanguage(this.value)">
+                      <option value="en-US">🇺🇸 English</option>
+                      <option value="pt-BR" selected>🇧🇷 Português</option>
+                      <option value="es-ES">🇪🇸 Español</option>
+                  </select>
+              </div>
+          </div>
+
+          <!-- Add the HTML <div> element for Gantt  -->
+            <div id="Gantt"></div>
+           <style>
+               /* MINIMAL STYLING - SYNCFUSION DEFAULT */
+               html, body {
+                   margin: 0;
+                   padding: 0;
+                   height: 100%;
+                   width: 100%;
+                   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+               }
+
+               #Gantt {
+                   height: 100%;
+                   width: 100%;
+               }
+
+               /* LANGUAGE SELECTOR STYLING */
+               #language-selector-container {
+                   position: fixed;
+                   top: 10px;
+                   right: 10px;
+                   z-index: 1000;
+                   background: rgba(255, 255, 255, 0.95);
+                   border-radius: 6px;
+                   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                   padding: 8px 12px;
+                   border: 1px solid #e5e7eb;
+               }
+
+               .language-selector {
+                   display: flex;
+                   align-items: center;
+                   gap: 8px;
+               }
+
+               .language-selector label {
+                   font-size: 11px;
+                   font-weight: 500;
+                   color: #374151;
+                   white-space: nowrap;
+               }
+
+               #languageSelector {
+                   font-size: 11px;
+                   padding: 4px 8px;
+                   border: 1px solid #e5e7eb;
+                   border-radius: 4px;
+                   background: #ffffff;
+                   color: #374151;
+                   cursor: pointer;
+                   min-width: 120px;
+                   outline: none;
+               }
+
+               #languageSelector:hover {
+                   border-color: #007acc;
+               }
+
+               #languageSelector:focus {
+                   border-color: #007acc;
+                   box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.1);
+               }
+           </style>
+           <script src="main.js" type="text/javascript"></script>
+      </body>
+ </html>
