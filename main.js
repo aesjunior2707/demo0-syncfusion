@@ -512,6 +512,47 @@ if (ganttChart) {
     document.addEventListener('keydown', onKeyDown, false);
 })();
 
+// Funcionalidade para editar linha ao pressionar Enter na linha selecionada
+(function bindEditRowOnEnter() {
+    if (!ganttChart) return;
+
+    function onKeyDown(e) {
+        if (!ganttChart) return;
+
+        // Verifica se a tecla pressionada é Enter
+        if (e.key === 'Enter') {
+            try {
+                // Obtém a linha selecionada atual
+                var selectedRowIndex = ganttChart.selectedRowIndex;
+
+                // Verifica se há uma linha selecionada
+                if (selectedRowIndex !== undefined && selectedRowIndex !== -1) {
+                    e.preventDefault(); // Previne o comportamento padrão do Enter
+
+                    // Entra em modo de edição na primeira coluna editável (TaskName)
+                    // Usa o método editCell do TreeGrid interno do Gantt
+                    if (ganttChart.treeGrid && ganttChart.treeGrid.editCell) {
+                        ganttChart.treeGrid.editCell(selectedRowIndex, 'TaskName');
+                        console.log('Modo de edição ativado para linha:', selectedRowIndex);
+                    } else {
+                        // Método alternativo: usar startEdit do Gantt
+                        if (ganttChart.startEdit) {
+                            ganttChart.startEdit();
+                            console.log('Modo de edição ativado via startEdit()');
+                        } else {
+                            console.warn('Métodos de edição não disponíveis');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao entrar em modo de edição:', error);
+            }
+        }
+    }
+
+    document.addEventListener('keydown', onKeyDown, false);
+})();
+
 // Atalho para forçar remoção do loader travado (tecla Escape)
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
