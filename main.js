@@ -332,3 +332,84 @@ if (ganttChart) {
     }
     document.addEventListener('keydown', onKeyDown, false);
 })();
+
+// Funcionalidade para criar nova linha ao pressionar seta para baixo na última linha
+(function bindCreateRowOnArrowDown() {
+    if (!ganttChart) return;
+
+    function onKeyDown(e) {
+        if (!ganttChart) return;
+
+        // Verifica se a tecla pressionada é a seta para baixo
+        if (e.key === 'ArrowDown') {
+            try {
+                // Obtém a linha selecionada atual
+                var selectedRowIndex = ganttChart.selectedRowIndex;
+
+                // Verifica se há uma linha selecionada
+                if (selectedRowIndex === -1) return;
+
+                // Obtém o total de linhas visíveis (flatData inclui todas as linhas, inclusive expandidas)
+                var totalRows = ganttChart.flatData ? ganttChart.flatData.length : 0;
+
+                // Verifica se estamos na última linha (índice baseado em 0)
+                if (selectedRowIndex === totalRows - 1) {
+                    e.preventDefault(); // Previne o comportamento padrão da seta
+
+                    // Adiciona uma nova linha
+                    var newRecord = {
+                        TaskID: getNextTaskId(),
+                        TaskName: 'Nova Tarefa',
+                        StartDate: new Date(),
+                        Duration: 1,
+                        Progress: 0
+                    };
+
+                    // Adiciona o registro ao Gantt
+                    ganttChart.addRecord(newRecord, 'Below');
+
+                    // Aguarda um pequeno delay para garantir que a linha foi adicionada
+                    setTimeout(function() {
+                        try {
+                            // Seleciona a nova linha (que será a última)
+                            var newRowIndex = ganttChart.flatData.length - 1;
+                            ganttChart.selectRow(newRowIndex);
+
+                            // Entra em modo de edição na nova linha
+                            ganttChart.startEdit();
+                        } catch (editError) {
+                            console.error('Erro ao entrar em modo de edição:', editError);
+                        }
+                    }, 100);
+                }
+            } catch (error) {
+                console.error('Erro ao processar tecla para baixo:', error);
+            }
+        }
+    }
+
+    // Função para obter o próximo ID de tarefa disponível
+    function getNextTaskId() {
+        var maxId = 0;
+
+        function findMaxId(data) {
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                if (item.TaskID > maxId) {
+                    maxId = item.TaskID;
+                }
+                if (item.subtasks && item.subtasks.length > 0) {
+                    findMaxId(item.subtasks);
+                }
+            }
+        }
+
+        if (ganttChart.dataSource && ganttChart.dataSource.length > 0) {
+            findMaxId(ganttChart.dataSource);
+        }
+
+        return maxId + 1;
+    }
+
+    document.addEventListener('keydown', onKeyDown, false);
+})();
