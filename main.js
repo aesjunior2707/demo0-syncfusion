@@ -511,3 +511,14 @@ if (ganttChart) {
 
     document.addEventListener('keydown', onKeyDown, false);
 })();
+
+// Atalho para forçar remoção do loader travado (tecla Escape)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var spinnerElements = document.querySelectorAll('.e-spinner-pane.e-spin-show');
+        if (spinnerElements.length > 0) {
+            console.log('Escape pressionado - forçando remoção do loader');
+            forceHideSpinner();
+        }
+    }
+}, false);
