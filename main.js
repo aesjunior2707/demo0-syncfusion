@@ -112,6 +112,16 @@ try {
         { field: 'Predecessor', headerText: 'Predecessores', width: 120, textAlign: 'Left', allowEditing: true, clipMode: 'EllipsisWithTooltip',
           valueAccessor: displayPredecessors }
     ],
+    toolbarClick: function(args) {
+        if (args && args.item && args.item.id === 'Gantt_Clear') {
+            try {
+                ganttChart.dataSource = [];
+                ganttChart.refresh();
+            } catch (e) {
+                console.error('Falha ao limpar o dataSource:', e);
+            }
+        }
+    },
     labelSettings: {
         leftLabel: 'TaskName',
         rightLabel: 'Progress',
