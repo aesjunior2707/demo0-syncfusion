@@ -236,6 +236,39 @@ try {
                 ganttChart.hideSpinner();
             }
         }
+    },
+
+    // Evento para detectar seleção de linha
+    rowSelected: function(args) {
+        try {
+            console.log('Linha selecionada:', args.rowIndex);
+        } catch (error) {
+            console.error('Erro no evento rowSelected:', error);
+        }
+    },
+
+    // Evento de tecla pressionada no componente
+    keyPressed: function(args) {
+        try {
+            // Verifica se Enter foi pressionado
+            if (args.key === 'Enter' && !args.target.classList.contains('e-input')) {
+                var selectedRowIndex = ganttChart.selectedRowIndex;
+
+                if (selectedRowIndex !== undefined && selectedRowIndex !== -1) {
+                    args.preventDefault();
+
+                    // Inicia edição da célula TaskName
+                    setTimeout(function() {
+                        if (ganttChart.treeGrid && ganttChart.treeGrid.editCell) {
+                            ganttChart.treeGrid.editCell(selectedRowIndex, 'TaskName');
+                            console.log('Editando linha via keyPressed:', selectedRowIndex);
+                        }
+                    }, 50);
+                }
+            }
+        } catch (error) {
+            console.error('Erro no evento keyPressed:', error);
+        }
     }
     });
 } catch (error) {
