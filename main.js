@@ -307,99 +307,164 @@ if (ganttChart) {
     };
 }
 
-// Atalhos de teclado: Ctrl+Shift+→ para indentar, Ctrl+Shift+← para desindentar
-// Seta para baixo na última linha adiciona nova tarefa
+// Atalhos de teclado e funcionalidades do Gantt
 (function bindGanttShortcuts(){
-    if (!ganttChart) return;
-    function isTypingTarget(target){
-        var tag = (target && target.tagName ? target.tagName : '').toLowerCase();
-        return tag === 'input' || tag === 'textarea' || (target && target.isContentEditable === true);
-    }
-
-    function getNextTaskId() {
-        if (!ganttChart.dataSource || ganttChart.dataSource.length === 0) {
-            return 1;
+    // Aguardar o Gantt ser inicializado
+    setTimeout(function() {
+        if (!ganttChart) {
+            console.log('Gantt não inicializado ainda');
+            return;
         }
 
-        var maxId = 0;
-        function findMaxId(data) {
-            for (var i = 0; i < data.length; i++) {
-                if (data[i].TaskID > maxId) {
-                    maxId = data[i].TaskID;
-                }
-                if (data[i].subtasks && data[i].subtasks.length > 0) {
-                    findMaxId(data[i].subtasks);
+        console.log('Inicializando atalhos do Gantt');
+
+        function isTypingTarget(target){
+            var tag = (target && target.tagName ? target.tagName : '').toLowerCase();
+            var isEditing = target && (target.classList.contains('e-input') || target.classList.contains('e-editedbatchcell'));
+            return tag === 'input' || tag === 'textarea' || (target && target.isContentEditable === true) || isEditing;
+        }
+
+        function getNextTaskId() {
+            if (!ganttChart.dataSource || ganttChart.dataSource.length === 0) {
+                return 1;
+            }
+
+            var maxId = 0;
+            function findMaxId(data) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].TaskID > maxId) {
+                        maxId = data[i].TaskID;
+                    }
+                    if (data[i].subtasks && data[i].subtasks.length > 0) {
+                        findMaxId(data[i].subtasks);
+                    }
                 }
             }
+            findMaxId(ganttChart.dataSource);
+            return maxId + 1;
         }
-        findMaxId(ganttChart.dataSource);
-        return maxId + 1;
-    }
 
-    function isOnLastRow() {
-        try {
-            var selectedRow = ganttChart.selectedRowIndex;
-            var totalRows = ganttChart.getCurrentViewRecords().length;
-            return selectedRow === totalRows - 1;
-        } catch (e) {
-            return false;
+        function isOnLastRow() {
+            try {
+                var selectedRow = ganttChart.selectedRowIndex;
+                var flatData = ganttChart.flatData || ganttChart.getCurrentViewRecords();
+                var totalRows = flatData.length;
+                console.log('Linha selecionada:', selectedRow, 'Total de linhas:', totalRows);
+                return selectedRow === totalRows - 1 && selectedRow >= 0;
+            } catch (e) {
+                console.log('Erro ao verificar última linha:', e);
+                return false;
+            }
         }
-    }
 
-    function onKeyDown(e){
-        if (!ganttChart) return;
-        if (isTypingTarget(e.target)) return;
+        function addNewTaskInEditMode() {
+            try {
+                console.log('Adicionando nova tarefa...');
+                var newTaskId = getNextTaskId();
+                var newTask = {
+                    TaskID: newTaskId,
+                    TaskName: 'Nova Tarefa ' + newTaskId,
+                    StartDate: new Date(),
+                    Duration: 1,
+                    Progress: 0
+                };
 
-        // Ctrl+Shift+→ para indentar, Ctrl+Shift+← para desindentar
-        if (e.ctrlKey && e.shiftKey) {
-            if (e.key === 'ArrowRight') {
-                if (typeof ganttChart.indent === 'function') {
+                // Adicionar a nova tarefa
+                ganttChart.addRecord(newTask);
+                console.log('Nova tarefa adicionada:', newTask);
+
+                // Aguardar e então selecionar e editar
+                setTimeout(function() {
+                    try {
+                        var flatData = ganttChart.flatData || ganttChart.getCurrentViewRecords();
+                        var newRowIndex = flatData.length - 1;
+
+                        // Selecionar a nova linha
+                        ganttChart.selectRow(newRowIndex);
+                        console.log('Linha selecionada:', newRowIndex);
+
+                        // Iniciar edição
+                        setTimeout(function() {
+                            try {
+                                if (ganttChart.editModule && ganttChart.editModule.startEdit) {
+                                    ganttChart.editModule.startEdit();
+                                } else if (ganttChart.startEdit) {
+                                    ganttChart.startEdit();
+                                }
+                                console.log('Modo de edição iniciado');
+                            } catch (editError) {
+                                console.log('Erro ao iniciar edição:', editError);
+                                // Fallback: tentar editar diretamente a célula TaskName
+                                try {
+                                    ganttChart.editCell(newRowIndex, 'TaskName');
+                                } catch (cellEditError) {
+                                    console.log('Erro ao editar célula:', cellEditError);
+                                }
+                            }
+                        }, 200);
+
+                    } catch (selectError) {
+                        console.log('Erro ao selecionar linha:', selectError);
+                    }
+                }, 300);
+
+            } catch (addError) {
+                console.log('Erro ao adicionar nova tarefa:', addError);
+            }
+        }
+
+        function onKeyDown(e){
+            console.log('Tecla pressionada:', e.key, 'Target:', e.target);
+
+            if (!ganttChart) return;
+
+            // Verificar se está editando
+            if (isTypingTarget(e.target)) {
+                console.log('Ignorando - está editando');
+                return;
+            }
+
+            // Ctrl+Shift+→ para indentar, Ctrl+Shift+← para desindentar
+            if (e.ctrlKey && e.shiftKey) {
+                if (e.key === 'ArrowRight') {
+                    if (typeof ganttChart.indent === 'function') {
+                        e.preventDefault();
+                        ganttChart.indent();
+                    }
+                } else if (e.key === 'ArrowLeft') {
+                    if (typeof ganttChart.outdent === 'function') {
+                        e.preventDefault();
+                        ganttChart.outdent();
+                    }
+                }
+                return;
+            }
+
+            // Seta para baixo na última linha adiciona nova tarefa
+            if (e.key === 'ArrowDown' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                console.log('Seta para baixo detectada');
+
+                if (isOnLastRow()) {
+                    console.log('Está na última linha - adicionando nova tarefa');
                     e.preventDefault();
-                    ganttChart.indent();
-                }
-            } else if (e.key === 'ArrowLeft') {
-                if (typeof ganttChart.outdent === 'function') {
-                    e.preventDefault();
-                    ganttChart.outdent();
+                    e.stopPropagation();
+                    addNewTaskInEditMode();
+                } else {
+                    console.log('Não está na última linha');
                 }
             }
         }
 
-        // Seta para baixo na última linha adiciona nova tarefa
-        if (e.key === 'ArrowDown' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
-            if (isOnLastRow()) {
-                e.preventDefault();
-                try {
-                    var newTaskId = getNextTaskId();
-                    var newTask = {
-                        TaskID: newTaskId,
-                        TaskName: 'Nova Tarefa ' + newTaskId,
-                        StartDate: new Date(),
-                        Duration: 1,
-                        Progress: 0
-                    };
-
-                    ganttChart.addRecord(newTask);
-
-                    // Aguardar um pouco e então iniciar edição
-                    setTimeout(function() {
-                        try {
-                            // Selecionar a nova linha
-                            var newRowIndex = ganttChart.getCurrentViewRecords().length - 1;
-                            ganttChart.selectRow(newRowIndex);
-
-                            // Iniciar edição na célula TaskName
-                            ganttChart.startEdit();
-                        } catch (editError) {
-                            console.log('Erro ao iniciar edição:', editError);
-                        }
-                    }, 100);
-
-                } catch (addError) {
-                    console.log('Erro ao adicionar nova tarefa:', addError);
-                }
-            }
+        // Remover listener anterior se existir
+        if (window.ganttKeyHandler) {
+            document.removeEventListener('keydown', window.ganttKeyHandler, false);
         }
-    }
-    document.addEventListener('keydown', onKeyDown, false);
+
+        // Adicionar novo listener
+        window.ganttKeyHandler = onKeyDown;
+        document.addEventListener('keydown', onKeyDown, false);
+
+        console.log('Event listeners do Gantt configurados');
+
+    }, 1000); // Aguardar 1 segundo para o Gantt estar completamente carregado
 })();
