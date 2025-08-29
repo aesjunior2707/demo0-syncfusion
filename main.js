@@ -308,25 +308,96 @@ if (ganttChart) {
 }
 
 // Atalhos de teclado: Ctrl+Shift+→ para indentar, Ctrl+Shift+← para desindentar
+// Seta para baixo na última linha adiciona nova tarefa
 (function bindGanttShortcuts(){
     if (!ganttChart) return;
     function isTypingTarget(target){
         var tag = (target && target.tagName ? target.tagName : '').toLowerCase();
         return tag === 'input' || tag === 'textarea' || (target && target.isContentEditable === true);
     }
+
+    function getNextTaskId() {
+        if (!ganttChart.dataSource || ganttChart.dataSource.length === 0) {
+            return 1;
+        }
+
+        var maxId = 0;
+        function findMaxId(data) {
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].TaskID > maxId) {
+                    maxId = data[i].TaskID;
+                }
+                if (data[i].subtasks && data[i].subtasks.length > 0) {
+                    findMaxId(data[i].subtasks);
+                }
+            }
+        }
+        findMaxId(ganttChart.dataSource);
+        return maxId + 1;
+    }
+
+    function isOnLastRow() {
+        try {
+            var selectedRow = ganttChart.selectedRowIndex;
+            var totalRows = ganttChart.getCurrentViewRecords().length;
+            return selectedRow === totalRows - 1;
+        } catch (e) {
+            return false;
+        }
+    }
+
     function onKeyDown(e){
         if (!ganttChart) return;
-        if (!e.ctrlKey || !e.shiftKey) return;
         if (isTypingTarget(e.target)) return;
-        if (e.key === 'ArrowRight') {
-            if (typeof ganttChart.indent === 'function') {
-                e.preventDefault();
-                ganttChart.indent();
+
+        // Ctrl+Shift+→ para indentar, Ctrl+Shift+← para desindentar
+        if (e.ctrlKey && e.shiftKey) {
+            if (e.key === 'ArrowRight') {
+                if (typeof ganttChart.indent === 'function') {
+                    e.preventDefault();
+                    ganttChart.indent();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                if (typeof ganttChart.outdent === 'function') {
+                    e.preventDefault();
+                    ganttChart.outdent();
+                }
             }
-        } else if (e.key === 'ArrowLeft') {
-            if (typeof ganttChart.outdent === 'function') {
+        }
+
+        // Seta para baixo na última linha adiciona nova tarefa
+        if (e.key === 'ArrowDown' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+            if (isOnLastRow()) {
                 e.preventDefault();
-                ganttChart.outdent();
+                try {
+                    var newTaskId = getNextTaskId();
+                    var newTask = {
+                        TaskID: newTaskId,
+                        TaskName: 'Nova Tarefa ' + newTaskId,
+                        StartDate: new Date(),
+                        Duration: 1,
+                        Progress: 0
+                    };
+
+                    ganttChart.addRecord(newTask);
+
+                    // Aguardar um pouco e então iniciar edição
+                    setTimeout(function() {
+                        try {
+                            // Selecionar a nova linha
+                            var newRowIndex = ganttChart.getCurrentViewRecords().length - 1;
+                            ganttChart.selectRow(newRowIndex);
+
+                            // Iniciar edição na célula TaskName
+                            ganttChart.startEdit();
+                        } catch (editError) {
+                            console.log('Erro ao iniciar edição:', editError);
+                        }
+                    }, 100);
+
+                } catch (addError) {
+                    console.log('Erro ao adicionar nova tarefa:', addError);
+                }
             }
         }
     }
