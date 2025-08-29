@@ -236,6 +236,39 @@ try {
                 ganttChart.hideSpinner();
             }
         }
+    },
+
+    // Evento para detectar seleção de linha
+    rowSelected: function(args) {
+        try {
+            console.log('Linha selecionada:', args.rowIndex);
+        } catch (error) {
+            console.error('Erro no evento rowSelected:', error);
+        }
+    },
+
+    // Evento de tecla pressionada no componente
+    keyPressed: function(args) {
+        try {
+            // Verifica se Enter foi pressionado
+            if (args.key === 'Enter' && !args.target.classList.contains('e-input')) {
+                var selectedRowIndex = ganttChart.selectedRowIndex;
+
+                if (selectedRowIndex !== undefined && selectedRowIndex !== -1) {
+                    args.preventDefault();
+
+                    // Inicia edição da célula TaskName
+                    setTimeout(function() {
+                        if (ganttChart.treeGrid && ganttChart.treeGrid.editCell) {
+                            ganttChart.treeGrid.editCell(selectedRowIndex, 'TaskName');
+                            console.log('Editando linha via keyPressed:', selectedRowIndex);
+                        }
+                    }, 50);
+                }
+            }
+        } catch (error) {
+            console.error('Erro no evento keyPressed:', error);
+        }
     }
     });
 } catch (error) {
@@ -510,6 +543,86 @@ if (ganttChart) {
     }
 
     document.addEventListener('keydown', onKeyDown, false);
+})();
+
+// Funcionalidade para editar linha ao pressionar Enter na linha selecionada
+(function bindEditRowOnEnter() {
+    if (!ganttChart) return;
+
+    var lastClickedRowIndex = -1;
+    var ganttElement = document.getElementById('Gantt');
+
+    if (!ganttElement) return;
+
+    // Detectar clique nas linhas do Gantt para garantir seleção
+    function onGanttClick(e) {
+        if (!ganttChart) return;
+
+        // Verificar se o clique foi dentro do tree grid do Gantt
+        var treeGridElement = e.target.closest('.e-gantt-tree-grid');
+        if (!treeGridElement) return;
+
+        // Encontrar o elemento da linha mais próximo
+        var rowElement = e.target.closest('[role="row"]');
+        if (rowElement && rowElement.closest('.e-content')) {
+            // Obter o índice da linha
+            var rowIndex = Array.from(rowElement.parentNode.children).indexOf(rowElement);
+
+            if (rowIndex >= 0) {
+                lastClickedRowIndex = rowIndex;
+
+                // Selecionar a linha programaticamente
+                setTimeout(function() {
+                    if (ganttChart.selectRow) {
+                        ganttChart.selectRow(rowIndex);
+                        console.log('Linha selecionada via clique:', rowIndex);
+                    }
+                }, 10);
+            }
+        }
+    }
+
+    function onGanttKeyDown(e) {
+        if (!ganttChart) return;
+
+        // Verificar se o foco está no Gantt
+        if (!e.target.closest('#Gantt')) return;
+
+        // Verifica se a tecla pressionada é Enter e não está em um input
+        if (e.key === 'Enter' && !e.target.matches('input, textarea, [contenteditable]')) {
+            try {
+                // Obtém a linha selecionada atual
+                var selectedRowIndex = ganttChart.selectedRowIndex;
+
+                // Se não tiver linha selecionada, usar a última clicada
+                if ((selectedRowIndex === undefined || selectedRowIndex === -1) && lastClickedRowIndex !== -1) {
+                    selectedRowIndex = lastClickedRowIndex;
+                }
+
+                // Verifica se há uma linha selecionada válida
+                if (selectedRowIndex !== undefined && selectedRowIndex !== -1) {
+                    e.preventDefault(); // Previne o comportamento padrão do Enter
+
+                    // Entra em modo de edição na primeira coluna editável (TaskName)
+                    setTimeout(function() {
+                        if (ganttChart.treeGrid && ganttChart.treeGrid.editCell) {
+                            ganttChart.treeGrid.editCell(selectedRowIndex, 'TaskName');
+                            console.log('Modo de edição ativado para linha:', selectedRowIndex);
+                        } else if (ganttChart.startEdit) {
+                            ganttChart.startEdit();
+                            console.log('Modo de edição ativado via startEdit()');
+                        }
+                    }, 50);
+                }
+            } catch (error) {
+                console.error('Erro ao entrar em modo de edição:', error);
+            }
+        }
+    }
+
+    // Adicionar event listeners específicos ao elemento Gantt
+    ganttElement.addEventListener('click', onGanttClick, false);
+    document.addEventListener('keydown', onGanttKeyDown, false);
 })();
 
 // Atalho para forçar remoção do loader travado (tecla Escape)
