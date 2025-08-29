@@ -516,6 +516,31 @@ if (ganttChart) {
 (function bindEditRowOnEnter() {
     if (!ganttChart) return;
 
+    var lastClickedRowIndex = -1;
+
+    // Detectar clique nas linhas para garantir seleção
+    function onRowClick(e) {
+        if (!ganttChart) return;
+
+        // Encontrar o elemento da linha mais próximo
+        var rowElement = e.target.closest('[role="row"]');
+        if (rowElement) {
+            // Obter o índice da linha a partir do data-uid ou outro atributo
+            var rowIndex = Array.from(rowElement.parentNode.children).indexOf(rowElement);
+
+            // Ajustar índice considerando cabeçalho (se necessário)
+            if (rowElement.closest('.e-content')) {
+                lastClickedRowIndex = rowIndex;
+
+                // Selecionar a linha programaticamente
+                if (ganttChart.selectRow) {
+                    ganttChart.selectRow(rowIndex);
+                    console.log('Linha selecionada:', rowIndex);
+                }
+            }
+        }
+    }
+
     function onKeyDown(e) {
         if (!ganttChart) return;
 
@@ -525,7 +550,12 @@ if (ganttChart) {
                 // Obtém a linha selecionada atual
                 var selectedRowIndex = ganttChart.selectedRowIndex;
 
-                // Verifica se há uma linha selecionada
+                // Se não tiver linha selecionada, usar a última clicada
+                if ((selectedRowIndex === undefined || selectedRowIndex === -1) && lastClickedRowIndex !== -1) {
+                    selectedRowIndex = lastClickedRowIndex;
+                }
+
+                // Verifica se há uma linha selecionada válida
                 if (selectedRowIndex !== undefined && selectedRowIndex !== -1) {
                     e.preventDefault(); // Previne o comportamento padrão do Enter
 
@@ -550,6 +580,8 @@ if (ganttChart) {
         }
     }
 
+    // Adicionar event listeners
+    document.addEventListener('click', onRowClick, false);
     document.addEventListener('keydown', onKeyDown, false);
 })();
 
