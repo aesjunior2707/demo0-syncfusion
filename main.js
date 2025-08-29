@@ -368,28 +368,28 @@ if (ganttChart) {
                     // Adiciona o registro ao Gantt
                     ganttChart.addRecord(newRecord, 'Below');
 
-                    // Aguarda um pequeno delay para garantir que a linha foi adicionada
+                    // Aguarda um pequeno delay para garantir que a linha foi adicionada e renderizada
                     setTimeout(function() {
                         try {
-                            // Seleciona a nova linha (que será a última)
-                            var newRowIndex = ganttChart.flatData.length - 1;
-                            ganttChart.selectRow(newRowIndex);
+                            // Encontra o índice da nova linha usando o TaskID
+                            var newRowIndex = ganttChart.flatData.findIndex(function(row) {
+                                return row.TaskID === newRecord.TaskID;
+                            });
 
-                            // Entra em modo de edição na nova linha usando o método correto
-                            // Para Syncfusion Gantt, usamos editCell para iniciar edição em uma célula específica
-                            ganttChart.editCell(newRowIndex, 'TaskName');
+                            if (newRowIndex !== -1) {
+                                // Seleciona a nova linha
+                                ganttChart.selectRow(newRowIndex);
+
+                                // Entra em modo de edição usando o método correto do TreeGrid
+                                ganttChart.treeGrid.editCell(newRowIndex, 'TaskName');
+                                console.log('Nova linha criada e edição iniciada no índice:', newRowIndex);
+                            } else {
+                                console.warn('Nova linha não encontrada nos dados flatData');
+                            }
                         } catch (editError) {
                             console.error('Erro ao entrar em modo de edição:', editError);
-
-                            // Método alternativo caso editCell não funcione
-                            try {
-                                // Tenta selecionar a célula e depois duplo-clique programático
-                                ganttChart.selectCell({ rowIndex: newRowIndex, cellIndex: 1 }, true);
-                            } catch (alternativeError) {
-                                console.error('Erro no método alternativo de edi��ão:', alternativeError);
-                            }
                         }
-                    }, 100);
+                    }, 150);
                 }
             } catch (error) {
                 console.error('Erro ao processar tecla para baixo:', error);
