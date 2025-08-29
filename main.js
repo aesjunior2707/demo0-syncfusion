@@ -375,10 +375,19 @@ if (ganttChart) {
                             var newRowIndex = ganttChart.flatData.length - 1;
                             ganttChart.selectRow(newRowIndex);
 
-                            // Entra em modo de edição na nova linha
-                            ganttChart.startEdit();
+                            // Entra em modo de edição na nova linha usando o método correto
+                            // Para Syncfusion Gantt, usamos editCell para iniciar edição em uma célula específica
+                            ganttChart.editCell(newRowIndex, 'TaskName');
                         } catch (editError) {
                             console.error('Erro ao entrar em modo de edição:', editError);
+
+                            // Método alternativo caso editCell não funcione
+                            try {
+                                // Tenta selecionar a célula e depois duplo-clique programático
+                                ganttChart.selectCell({ rowIndex: newRowIndex, cellIndex: 1 }, true);
+                            } catch (alternativeError) {
+                                console.error('Erro no método alternativo de edi��ão:', alternativeError);
+                            }
                         }
                     }, 100);
                 }
