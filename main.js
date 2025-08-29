@@ -138,13 +138,49 @@ try {
         zoomOut: true,
         zoomToFit: true
     },
-    // DRAG AND DROP BÁSICO - SEM CUSTOMIZAÇÕES
+    // DRAG AND DROP COM TRATAMENTO DE ERRO
     rowDrop: function (args) {
-        // Comportamento padrão do Syncfusion - sem interceptações
-        console.log('Row drop:', args.data[0] ? args.data[0].TaskName : 'Unknown');
+        try {
+            // Log da operação de drag and drop
+            console.log('Row drop:', args.data[0] ? args.data[0].TaskName : 'Unknown');
+
+            // Garantir que o loader seja removido em caso de sucesso
+            setTimeout(function() {
+                if (ganttChart && ganttChart.hideSpinner) {
+                    ganttChart.hideSpinner();
+                }
+            }, 100);
+
+        } catch (error) {
+            console.error('Erro no rowDrop:', error);
+
+            // Força a remoção do loader em caso de erro
+            if (ganttChart && ganttChart.hideSpinner) {
+                ganttChart.hideSpinner();
+            }
+
+            // Cancela a operação em caso de erro crítico
+            if (args) {
+                args.cancel = true;
+            }
+        }
     },
 
     actionBegin: function (args) {
+        // Log para debug de ações
+        console.log('Action begin:', args.requestType);
+
+        // Tratamento específico para rowDropping
+        if (args.requestType === 'rowDropping') {
+            try {
+                // Validações específicas para drag and drop podem ser adicionadas aqui
+                console.log('Iniciando drag and drop');
+            } catch (error) {
+                console.error('Erro no actionBegin (rowDropping):', error);
+                args.cancel = true;
+                return;
+            }
+        }
         
         // Processa predecessores antes de salvar
         if (args.requestType === 'save' && args.data && args.data.Predecessor !== undefined) {
@@ -172,10 +208,32 @@ try {
     },
 
     actionComplete: function (args) {
-        // Log para acompanhar alterações
-        if (args.requestType === 'save' && args.data) {
-            if (args.data.Predecessor !== undefined) {
-                console.log('Predecessores salvos para tarefa', args.data.TaskID + ':', args.data.Predecessor);
+        try {
+            // Log para acompanhar alterações
+            console.log('Action complete:', args.requestType);
+
+            if (args.requestType === 'save' && args.data) {
+                if (args.data.Predecessor !== undefined) {
+                    console.log('Predecessores salvos para tarefa', args.data.TaskID + ':', args.data.Predecessor);
+                }
+            }
+
+            // Garantir que o loader seja removido após drag and drop
+            if (args.requestType === 'rowDropping') {
+                console.log('Drag and drop concluído');
+                setTimeout(function() {
+                    if (ganttChart && ganttChart.hideSpinner) {
+                        ganttChart.hideSpinner();
+                    }
+                }, 50);
+            }
+
+        } catch (error) {
+            console.error('Erro no actionComplete:', error);
+
+            // Força a remoção do loader mesmo em caso de erro
+            if (ganttChart && ganttChart.hideSpinner) {
+                ganttChart.hideSpinner();
             }
         }
     }
@@ -279,11 +337,41 @@ function getAllTaskIds() {
     return taskIds;
 }
 
+// Função para forçar remoção do loader travado
+function forceHideSpinner() {
+    try {
+        if (ganttChart && ganttChart.hideSpinner) {
+            ganttChart.hideSpinner();
+        }
+
+        // Método alternativo: remover diretamente do DOM
+        var spinnerElements = document.querySelectorAll('.e-spinner-pane.e-spin-show');
+        spinnerElements.forEach(function(spinner) {
+            spinner.classList.remove('e-spin-show');
+            spinner.style.display = 'none';
+        });
+
+        console.log('Loader forçadamente removido');
+    } catch (error) {
+        console.error('Erro ao forçar remoção do loader:', error);
+    }
+}
+
 // Adicionar o Gantt ao DOM
 if (ganttChart) {
     try {
         ganttChart.appendTo('#Gantt');
         console.log('Gantt inicializado com sucesso');
+
+        // Adicionar verificação periódica para loader travado
+        setInterval(function() {
+            var spinnerElements = document.querySelectorAll('.e-spinner-pane.e-spin-show');
+            if (spinnerElements.length > 0) {
+                console.warn('Loader detectado há muito tempo, removendo automaticamente...');
+                forceHideSpinner();
+            }
+        }, 5000); // Verifica a cada 5 segundos
+
     } catch (error) {
         console.error('Erro ao anexar Gantt ao DOM:', error);
     }
@@ -332,3 +420,105 @@ if (ganttChart) {
     }
     document.addEventListener('keydown', onKeyDown, false);
 })();
+
+// Funcionalidade para criar nova linha ao pressionar seta para baixo na última linha
+(function bindCreateRowOnArrowDown() {
+    if (!ganttChart) return;
+
+    function onKeyDown(e) {
+        if (!ganttChart) return;
+
+        // Verifica se a tecla pressionada é a seta para baixo
+        if (e.key === 'ArrowDown') {
+            try {
+                // Obtém a linha selecionada atual
+                var selectedRowIndex = ganttChart.selectedRowIndex;
+
+                // Obtém o total de linhas visíveis (flatData inclui todas as linhas, inclusive expandidas)
+                var totalRows = ganttChart.flatData ? ganttChart.flatData.length : 0;
+
+                // Verifica se deve criar nova linha em dois cenários:
+                // 1. Grid vazio (sem linhas)
+                // 2. Está na última linha
+                var shouldCreateNewRow = (totalRows === 0) || (selectedRowIndex === totalRows - 1 && selectedRowIndex !== -1);
+
+                if (shouldCreateNewRow) {
+                    e.preventDefault(); // Previne o comportamento padrão da seta
+
+                    // Adiciona uma nova linha
+                    var newRecord = {
+                        TaskID: getNextTaskId(),
+                        TaskName: 'Nova Tarefa',
+                        StartDate: new Date(),
+                        Duration: 1,
+                        Progress: 0
+                    };
+
+                    // Adiciona o registro ao Gantt
+                    ganttChart.addRecord(newRecord, 'Below');
+
+                    // Aguarda um pequeno delay para garantir que a linha foi adicionada e renderizada
+                    setTimeout(function() {
+                        try {
+                            // Encontra o índice da nova linha usando o TaskID
+                            var newRowIndex = ganttChart.flatData.findIndex(function(row) {
+                                return row.TaskID === newRecord.TaskID;
+                            });
+
+                            if (newRowIndex !== -1) {
+                                // Seleciona a nova linha
+                                ganttChart.selectRow(newRowIndex);
+
+                                // Entra em modo de edição usando o método correto do TreeGrid
+                                ganttChart.treeGrid.editCell(newRowIndex, 'TaskName');
+                                console.log('Nova linha criada e edição iniciada no índice:', newRowIndex);
+                            } else {
+                                console.warn('Nova linha não encontrada nos dados flatData');
+                            }
+                        } catch (editError) {
+                            console.error('Erro ao entrar em modo de edição:', editError);
+                        }
+                    }, 150);
+                }
+            } catch (error) {
+                console.error('Erro ao processar tecla para baixo:', error);
+            }
+        }
+    }
+
+    // Função para obter o próximo ID de tarefa disponível
+    function getNextTaskId() {
+        var maxId = 0;
+
+        function findMaxId(data) {
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                if (item.TaskID > maxId) {
+                    maxId = item.TaskID;
+                }
+                if (item.subtasks && item.subtasks.length > 0) {
+                    findMaxId(item.subtasks);
+                }
+            }
+        }
+
+        if (ganttChart.dataSource && ganttChart.dataSource.length > 0) {
+            findMaxId(ganttChart.dataSource);
+        }
+
+        return maxId + 1;
+    }
+
+    document.addEventListener('keydown', onKeyDown, false);
+})();
+
+// Atalho para forçar remoção do loader travado (tecla Escape)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var spinnerElements = document.querySelectorAll('.e-spinner-pane.e-spin-show');
+        if (spinnerElements.length > 0) {
+            console.log('Escape pressionado - forçando remoção do loader');
+            forceHideSpinner();
+        }
+    }
+}, false);
