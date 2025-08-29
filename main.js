@@ -337,11 +337,41 @@ function getAllTaskIds() {
     return taskIds;
 }
 
+// Função para forçar remoção do loader travado
+function forceHideSpinner() {
+    try {
+        if (ganttChart && ganttChart.hideSpinner) {
+            ganttChart.hideSpinner();
+        }
+
+        // Método alternativo: remover diretamente do DOM
+        var spinnerElements = document.querySelectorAll('.e-spinner-pane.e-spin-show');
+        spinnerElements.forEach(function(spinner) {
+            spinner.classList.remove('e-spin-show');
+            spinner.style.display = 'none';
+        });
+
+        console.log('Loader forçadamente removido');
+    } catch (error) {
+        console.error('Erro ao forçar remoção do loader:', error);
+    }
+}
+
 // Adicionar o Gantt ao DOM
 if (ganttChart) {
     try {
         ganttChart.appendTo('#Gantt');
         console.log('Gantt inicializado com sucesso');
+
+        // Adicionar verificação periódica para loader travado
+        setInterval(function() {
+            var spinnerElements = document.querySelectorAll('.e-spinner-pane.e-spin-show');
+            if (spinnerElements.length > 0) {
+                console.warn('Loader detectado há muito tempo, removendo automaticamente...');
+                forceHideSpinner();
+            }
+        }, 5000); // Verifica a cada 5 segundos
+
     } catch (error) {
         console.error('Erro ao anexar Gantt ao DOM:', error);
     }
