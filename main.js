@@ -550,35 +550,46 @@ if (ganttChart) {
     if (!ganttChart) return;
 
     var lastClickedRowIndex = -1;
+    var ganttElement = document.getElementById('Gantt');
 
-    // Detectar clique nas linhas para garantir seleção
-    function onRowClick(e) {
+    if (!ganttElement) return;
+
+    // Detectar clique nas linhas do Gantt para garantir seleção
+    function onGanttClick(e) {
         if (!ganttChart) return;
+
+        // Verificar se o clique foi dentro do tree grid do Gantt
+        var treeGridElement = e.target.closest('.e-gantt-tree-grid');
+        if (!treeGridElement) return;
 
         // Encontrar o elemento da linha mais próximo
         var rowElement = e.target.closest('[role="row"]');
-        if (rowElement) {
-            // Obter o índice da linha a partir do data-uid ou outro atributo
+        if (rowElement && rowElement.closest('.e-content')) {
+            // Obter o índice da linha
             var rowIndex = Array.from(rowElement.parentNode.children).indexOf(rowElement);
 
-            // Ajustar índice considerando cabeçalho (se necessário)
-            if (rowElement.closest('.e-content')) {
+            if (rowIndex >= 0) {
                 lastClickedRowIndex = rowIndex;
 
                 // Selecionar a linha programaticamente
-                if (ganttChart.selectRow) {
-                    ganttChart.selectRow(rowIndex);
-                    console.log('Linha selecionada:', rowIndex);
-                }
+                setTimeout(function() {
+                    if (ganttChart.selectRow) {
+                        ganttChart.selectRow(rowIndex);
+                        console.log('Linha selecionada via clique:', rowIndex);
+                    }
+                }, 10);
             }
         }
     }
 
-    function onKeyDown(e) {
+    function onGanttKeyDown(e) {
         if (!ganttChart) return;
 
-        // Verifica se a tecla pressionada é Enter
-        if (e.key === 'Enter') {
+        // Verificar se o foco está no Gantt
+        if (!e.target.closest('#Gantt')) return;
+
+        // Verifica se a tecla pressionada é Enter e não está em um input
+        if (e.key === 'Enter' && !e.target.matches('input, textarea, [contenteditable]')) {
             try {
                 // Obtém a linha selecionada atual
                 var selectedRowIndex = ganttChart.selectedRowIndex;
@@ -593,19 +604,15 @@ if (ganttChart) {
                     e.preventDefault(); // Previne o comportamento padrão do Enter
 
                     // Entra em modo de edição na primeira coluna editável (TaskName)
-                    // Usa o método editCell do TreeGrid interno do Gantt
-                    if (ganttChart.treeGrid && ganttChart.treeGrid.editCell) {
-                        ganttChart.treeGrid.editCell(selectedRowIndex, 'TaskName');
-                        console.log('Modo de edição ativado para linha:', selectedRowIndex);
-                    } else {
-                        // Método alternativo: usar startEdit do Gantt
-                        if (ganttChart.startEdit) {
+                    setTimeout(function() {
+                        if (ganttChart.treeGrid && ganttChart.treeGrid.editCell) {
+                            ganttChart.treeGrid.editCell(selectedRowIndex, 'TaskName');
+                            console.log('Modo de edição ativado para linha:', selectedRowIndex);
+                        } else if (ganttChart.startEdit) {
                             ganttChart.startEdit();
                             console.log('Modo de edição ativado via startEdit()');
-                        } else {
-                            console.warn('Métodos de edição não disponíveis');
                         }
-                    }
+                    }, 50);
                 }
             } catch (error) {
                 console.error('Erro ao entrar em modo de edição:', error);
@@ -613,9 +620,9 @@ if (ganttChart) {
         }
     }
 
-    // Adicionar event listeners
-    document.addEventListener('click', onRowClick, false);
-    document.addEventListener('keydown', onKeyDown, false);
+    // Adicionar event listeners específicos ao elemento Gantt
+    ganttElement.addEventListener('click', onGanttClick, false);
+    document.addEventListener('keydown', onGanttKeyDown, false);
 })();
 
 // Atalho para forçar remoção do loader travado (tecla Escape)
