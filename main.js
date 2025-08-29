@@ -27,6 +27,18 @@ try {
     console.error('Erro ao inicializar cultura:', error);
 }
 
+// Registrar licença do Syncfusion
+try {
+    if (typeof ej !== 'undefined' && ej.base && ej.base.registerLicense) {
+        ej.base.registerLicense('ORg4AjUWIQA/Gnt3VVhhQlJDfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5bdE1jUXxWcXZcQGNZWkd+');
+        console.log('Licença Syncfusion registrada.');
+    } else {
+        console.warn('API de licença do Syncfusion não disponível.');
+    }
+} catch (e) {
+    console.error('Falha ao registrar a licença do Syncfusion:', e);
+}
+
 // Função para exibir predecessores de forma amigável na coluna
 function displayPredecessors(field, data, column) {
     if (data.Predecessor) {
@@ -74,7 +86,7 @@ try {
         allowTaskbarEditing: true,
         mode: 'Auto'
     },
-    toolbar: ['Update', 'Delete','Clear', 'Cancel', 'ExpandAll', 'CollapseAll', 'ExcelExport', 'PdfExport', 'Search', 'ZoomIn', 'ZoomOut', 'ZoomToFit'],
+    toolbar: ['Add', 'Edit', 'Update', 'Delete', 'Clear', 'Cancel', 'ExpandAll', 'CollapseAll', 'Indent', 'Outdent', 'Search', 'ZoomIn', 'ZoomOut', 'ZoomToFit', 'ExcelExport', 'CsvExport', 'PdfExport'],
     highlightWeekends: true,
     timelineSettings: {
         timelineUnitSize: 100,
@@ -284,3 +296,29 @@ if (ganttChart) {
         }
     };
 }
+
+// Atalhos de teclado: Ctrl+Shift+→ para indentar, Ctrl+Shift+← para desindentar
+(function bindGanttShortcuts(){
+    if (!ganttChart) return;
+    function isTypingTarget(target){
+        var tag = (target && target.tagName ? target.tagName : '').toLowerCase();
+        return tag === 'input' || tag === 'textarea' || (target && target.isContentEditable === true);
+    }
+    function onKeyDown(e){
+        if (!ganttChart) return;
+        if (!e.ctrlKey || !e.shiftKey) return;
+        if (isTypingTarget(e.target)) return;
+        if (e.key === 'ArrowRight') {
+            if (typeof ganttChart.indent === 'function') {
+                e.preventDefault();
+                ganttChart.indent();
+            }
+        } else if (e.key === 'ArrowLeft') {
+            if (typeof ganttChart.outdent === 'function') {
+                e.preventDefault();
+                ganttChart.outdent();
+            }
+        }
+    }
+    document.addEventListener('keydown', onKeyDown, false);
+})();
