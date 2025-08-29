@@ -138,13 +138,49 @@ try {
         zoomOut: true,
         zoomToFit: true
     },
-    // DRAG AND DROP BÁSICO - SEM CUSTOMIZAÇÕES
+    // DRAG AND DROP COM TRATAMENTO DE ERRO
     rowDrop: function (args) {
-        // Comportamento padrão do Syncfusion - sem interceptações
-        console.log('Row drop:', args.data[0] ? args.data[0].TaskName : 'Unknown');
+        try {
+            // Log da operação de drag and drop
+            console.log('Row drop:', args.data[0] ? args.data[0].TaskName : 'Unknown');
+
+            // Garantir que o loader seja removido em caso de sucesso
+            setTimeout(function() {
+                if (ganttChart && ganttChart.hideSpinner) {
+                    ganttChart.hideSpinner();
+                }
+            }, 100);
+
+        } catch (error) {
+            console.error('Erro no rowDrop:', error);
+
+            // Força a remoção do loader em caso de erro
+            if (ganttChart && ganttChart.hideSpinner) {
+                ganttChart.hideSpinner();
+            }
+
+            // Cancela a operação em caso de erro crítico
+            if (args) {
+                args.cancel = true;
+            }
+        }
     },
 
     actionBegin: function (args) {
+        // Log para debug de ações
+        console.log('Action begin:', args.requestType);
+
+        // Tratamento espec��fico para rowDropping
+        if (args.requestType === 'rowDropping') {
+            try {
+                // Validações específicas para drag and drop podem ser adicionadas aqui
+                console.log('Iniciando drag and drop');
+            } catch (error) {
+                console.error('Erro no actionBegin (rowDropping):', error);
+                args.cancel = true;
+                return;
+            }
+        }
         
         // Processa predecessores antes de salvar
         if (args.requestType === 'save' && args.data && args.data.Predecessor !== undefined) {
