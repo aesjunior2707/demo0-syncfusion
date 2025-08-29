@@ -346,14 +346,15 @@ if (ganttChart) {
                 // Obtém a linha selecionada atual
                 var selectedRowIndex = ganttChart.selectedRowIndex;
 
-                // Verifica se há uma linha selecionada
-                if (selectedRowIndex === -1) return;
-
                 // Obtém o total de linhas visíveis (flatData inclui todas as linhas, inclusive expandidas)
                 var totalRows = ganttChart.flatData ? ganttChart.flatData.length : 0;
 
-                // Verifica se estamos na última linha (índice baseado em 0)
-                if (selectedRowIndex === totalRows - 1) {
+                // Verifica se deve criar nova linha em dois cenários:
+                // 1. Grid vazio (sem linhas)
+                // 2. Está na última linha
+                var shouldCreateNewRow = (totalRows === 0) || (selectedRowIndex === totalRows - 1 && selectedRowIndex !== -1);
+
+                if (shouldCreateNewRow) {
                     e.preventDefault(); // Previne o comportamento padrão da seta
 
                     // Adiciona uma nova linha
