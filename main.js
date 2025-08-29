@@ -170,7 +170,7 @@ try {
         // Log para debug de ações
         console.log('Action begin:', args.requestType);
 
-        // Tratamento espec��fico para rowDropping
+        // Tratamento específico para rowDropping
         if (args.requestType === 'rowDropping') {
             try {
                 // Validações específicas para drag and drop podem ser adicionadas aqui
@@ -208,10 +208,32 @@ try {
     },
 
     actionComplete: function (args) {
-        // Log para acompanhar alterações
-        if (args.requestType === 'save' && args.data) {
-            if (args.data.Predecessor !== undefined) {
-                console.log('Predecessores salvos para tarefa', args.data.TaskID + ':', args.data.Predecessor);
+        try {
+            // Log para acompanhar alterações
+            console.log('Action complete:', args.requestType);
+
+            if (args.requestType === 'save' && args.data) {
+                if (args.data.Predecessor !== undefined) {
+                    console.log('Predecessores salvos para tarefa', args.data.TaskID + ':', args.data.Predecessor);
+                }
+            }
+
+            // Garantir que o loader seja removido após drag and drop
+            if (args.requestType === 'rowDropping') {
+                console.log('Drag and drop concluído');
+                setTimeout(function() {
+                    if (ganttChart && ganttChart.hideSpinner) {
+                        ganttChart.hideSpinner();
+                    }
+                }, 50);
+            }
+
+        } catch (error) {
+            console.error('Erro no actionComplete:', error);
+
+            // Força a remoção do loader mesmo em caso de erro
+            if (ganttChart && ganttChart.hideSpinner) {
+                ganttChart.hideSpinner();
             }
         }
     }
