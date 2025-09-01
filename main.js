@@ -60,6 +60,7 @@ try {
     width: '100%',
     height: '100%',
     locale: 'en-US',
+    dateFormat: 'dd/MM/yyyy',
     taskFields: {
         id: 'TaskID',
         name: 'TaskName',
@@ -318,7 +319,8 @@ try {
             dataSource: [],
             width: '100%',
             height: '100%',
-            locale: 'en-US'
+            locale: 'en-US',
+            dateFormat: 'dd/MM/yyyy'
         });
     } catch (fallbackError) {
         console.error('Falha na reinicialização:', fallbackError);
