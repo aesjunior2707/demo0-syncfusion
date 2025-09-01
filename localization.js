@@ -578,7 +578,7 @@ function changeLanguage(newLocale) {
         // Apenas atualizar dados e textos do Gantt
         if (ganttChart) {
             // Atualizar dados do projeto
-            ganttChart.dataSource = getProjectDataByLocale(newLocale);
+          //  ganttChart.dataSource = getProjectDataByLocale(newLocale);
 
             // Atualizar colunas com novos textos
             updateColumnHeaders(newLocale);

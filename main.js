@@ -86,7 +86,7 @@ try {
         allowTaskbarEditing: true,
         mode: 'Auto'
     },
-    toolbar: ['Add', 'Edit', 'Update', 'Delete', 'Clear', 'Cancel', 'ExpandAll', 'CollapseAll', 'Indent', 'Outdent', 'Search', 'ZoomIn', 'ZoomOut', 'ZoomToFit', 'ExcelExport', 'CsvExport', 'PdfExport'],
+    toolbar: ['Inserir', 'Delete', 'Clear', 'Cancel', 'ExpandAll', 'CollapseAll', 'Indent', 'Outdent', 'Search', 'ZoomIn', 'ZoomOut', 'ZoomToFit'],
     highlightWeekends: true,
     timelineSettings: {
         timelineUnitSize: 100,
@@ -120,6 +120,42 @@ try {
             } catch (e) {
                 console.error('Falha ao limpar o dataSource:', e);
             }
+        }
+
+        if(args && args.item && args.item.id === 'Gantt_Inserir') {
+            var newRecord = {
+                TaskID: getNextTaskId(),
+                TaskName: '',
+                StartDate: new Date(),
+                Duration: 1,
+                Progress: 0
+            };
+
+            // Adiciona o registro ao Gantt
+            ganttChart.addRecord(newRecord, 'Below');
+
+            // Aguarda um pequeno delay para garantir que a linha foi adicionada e renderizada
+            setTimeout(function() {
+                try {
+                    // Encontra o índice da nova linha usando o TaskID
+                    var newRowIndex = ganttChart.flatData.findIndex(function(row) {
+                        return row.TaskID === newRecord.TaskID;
+                    });
+
+                    if (newRowIndex !== -1) {
+                        // Seleciona a nova linha
+                        ganttChart.selectRow(newRowIndex);
+
+                        // Entra em modo de edição usando o método correto do TreeGrid
+                        ganttChart.treeGrid.editCell(newRowIndex, 'TaskName');
+                        console.log('Nova linha criada e edição iniciada no índice:', newRowIndex);
+                    } else {
+                        console.warn('Nova linha não encontrada nos dados flatData');
+                    }
+                } catch (editError) {
+                    console.error('Erro ao entrar em modo de edição:', editError);
+                }
+            }, 150);
         }
     },
     labelSettings: {
@@ -481,7 +517,7 @@ if (ganttChart) {
                     // Adiciona uma nova linha
                     var newRecord = {
                         TaskID: getNextTaskId(),
-                        TaskName: 'Nova Tarefa',
+                        TaskName: '',
                         StartDate: new Date(),
                         Duration: 1,
                         Progress: 0
@@ -520,30 +556,32 @@ if (ganttChart) {
     }
 
     // Função para obter o próximo ID de tarefa disponível
-    function getNextTaskId() {
-        var maxId = 0;
-
-        function findMaxId(data) {
-            for (var i = 0; i < data.length; i++) {
-                var item = data[i];
-                if (item.TaskID > maxId) {
-                    maxId = item.TaskID;
-                }
-                if (item.subtasks && item.subtasks.length > 0) {
-                    findMaxId(item.subtasks);
-                }
-            }
-        }
-
-        if (ganttChart.dataSource && ganttChart.dataSource.length > 0) {
-            findMaxId(ganttChart.dataSource);
-        }
-
-        return maxId + 1;
-    }
+    
 
     document.addEventListener('keydown', onKeyDown, false);
 })();
+
+function getNextTaskId() {
+    var maxId = 0;
+
+    function findMaxId(data) {
+        for (var i = 0; i < data.length; i++) {
+            var item = data[i];
+            if (item.TaskID > maxId) {
+                maxId = item.TaskID;
+            }
+            if (item.subtasks && item.subtasks.length > 0) {
+                findMaxId(item.subtasks);
+            }
+        }
+    }
+
+    if (ganttChart.dataSource && ganttChart.dataSource.length > 0) {
+        findMaxId(ganttChart.dataSource);
+    }
+
+    return maxId + 1;
+}
 
 // Funcionalidade para editar linha ao pressionar Enter na linha selecionada
 (function bindEditRowOnEnter() {
